@@ -36,7 +36,9 @@ class TestWebApp(unittest.TestCase):
 
     def test_no_access_to_profile(self):
         # TODO: Check that non-logged-in user should be redirected to /login
-        assert False
+        response = self.client.get('/profile', follow_redirects = True)
+        assert response.status_code == 200
+        assert response.request.path == '/login'
 
     def test_register_user(self):
         response = self.client.post('/signup', data = {
@@ -81,6 +83,15 @@ class TestWebApp(unittest.TestCase):
 
     def test_xss_vulnerability(self):
         # TODO: Can we store javascript tags in the username field?
-        assert False
+        # Create a test user with a username containing a script tag
+        test_username = "<script>alert('XSS')</script>"
+        user = User(username=test_username)
+        user.save()
+
+        # Attempt to render the user's profile page
+        response = self.client.get(f"/users/{user.id}")
+
+        # Check that the script tag was not executed
+        assert "<script>" not in response.content.decode()
 
 
